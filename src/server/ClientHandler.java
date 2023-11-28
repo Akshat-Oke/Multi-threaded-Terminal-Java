@@ -2,6 +2,7 @@ package server;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
@@ -12,6 +13,7 @@ public class ClientHandler implements Runnable {
     private Socket socket;
     private BufferedReader bufferedReader;
     private BufferedWriter bufferedWriter;
+    private DataOutputStream dataOutputStream;
     private String clientUsername;
     private VirtualTerminal virtualTerminal = new VirtualTerminal();
     private boolean isNextBroadcastCommand = false;
@@ -22,6 +24,8 @@ public class ClientHandler implements Runnable {
             this.socket = socket;
             this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+            // create writer for binary data
+            this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
             this.clientUsername = bufferedReader.readLine();
             clientHandlers.add(this);
             broadcastMessage("SERVER: " + clientUsername + " has joined the chat");
@@ -34,7 +38,8 @@ public class ClientHandler implements Runnable {
     }
 
     private void runServerCommand(String command) {
-        switch (command.trim()) {
+        String[] commandParts = command.split("\\s+");
+        switch (commandParts[0].trim()) {
             case "exit":
                 sendTerminalResponse("Server closed. Enter any key to exit.");
                 exit();
@@ -43,7 +48,20 @@ public class ClientHandler implements Runnable {
                 isNextBroadcastCommand = true;
                 sendTerminalResponse("Enter your message to broadcast> ");
                 break;
+            case "download":
+                try {
+                    String filename = commandParts[1];
+                    // send file size
+                    // dataOutputStream.writeLong(virtualTerminal.getFileSize(filename));
+                    // send file
+                    virtualTerminal.sendFile(filename, dataOutputStream);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    sendTerminalResponse("Error uploading file");
+                }
+                break;
             default:
+                sendTerminalResponse("Invalid command '" + command + "', try again.");
                 break;
         }
     }
@@ -59,16 +77,8 @@ public class ClientHandler implements Runnable {
         CommandType commandType = Parser.getCommandType(message);
         if (commandType == CommandType.TERMINAL) {
             String response = Parser.parseTerminal(message, virtualTerminal);
-            // if (response == null) {
-            // if (Parser.isBroadcastCommand(message)) {
-            // isNextBroadcastCommand = true;
-            // response = "Enter your message to broadcast> ";
-            // } else {
-            // response = "Invalid command, try again.";
-            // }
-            // }
             if (response == null) {
-                response = "Invalid command " + message + ", try again.";
+                response = "Invalid command '" + message + "', try again.";
             }
             sendTerminalResponse(response);
         } else if (commandType == CommandType.SERVER) {
@@ -90,9 +100,11 @@ public class ClientHandler implements Runnable {
     @Override
     public void run() {
         String messageFromClient;
-        while (socket.isConnected() || isRunning) {
+        while (socket.isConnected() && isRunning) {
             try {
                 messageFromClient = bufferedReader.readLine();
+                System.out.println(messageFromClient);
+                // isRunning = false;
                 if (messageFromClient == null) {
                     broadcastMessage("SERVER: " + clientUsername + " has left the chat");
                     closeEverything();
@@ -105,7 +117,7 @@ public class ClientHandler implements Runnable {
                 // }
                 invokeCommand(messageFromClient);
             } catch (Exception e) {
-                // e.printStackTrace();
+                e.printStackTrace();
                 exit();
                 break;
             }
@@ -130,11 +142,12 @@ public class ClientHandler implements Runnable {
     }
 
     public void exit() {
-        if (!isRunning)
-            return;
+        // if (!isRunning)
+        // return;
         clientHandlers.remove(this);
         broadcastMessage("SERVER: " + clientUsername + " has left the chat");
         closeEverything();
+        System.out.println("Exiting");
         isRunning = false;
     }
 
@@ -147,6 +160,7 @@ public class ClientHandler implements Runnable {
             if (socket != null)
                 socket.close();
         } catch (Exception e) {
+            System.out.println("Error closing client handler");
             e.printStackTrace();
         }
     }

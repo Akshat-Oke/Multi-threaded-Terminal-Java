@@ -11,6 +11,10 @@ public class Parser {
     public static String parseTerminal(String message, VirtualTerminal virtualTerminal) {
         String[] messageArray = message.split("\\s+");
         String command = messageArray[0];
+        String argument = null;
+        if (messageArray.length > 1) {
+            argument = messageArray[1];
+        }
         // String argument = messageArray[1];
         String response = "";
         switch (command) {
@@ -20,9 +24,12 @@ public class Parser {
             case "pwd":
                 response = virtualTerminal.pwd();
                 break;
-            // case "cd":
-            // response = VirtualTerminal.cd(argument);
-            // break;
+            case "cd":
+                response = virtualTerminal.cd(argument);
+                break;
+            case "r--r":
+                response = "rerouting to file";
+                break;
             // case "mkdir":
             // response = VirtualTerminal.mkdir(argument);
             // break;

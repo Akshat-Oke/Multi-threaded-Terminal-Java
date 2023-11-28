@@ -1,0 +1,12 @@
+Invalid command '', try again.
+D:\Projects\Java-Project-M
+.git/
+.vscode/
+bin/
+lib/
+README.md
+src/
+test.txt
+test1.txt
+test2.txt
+

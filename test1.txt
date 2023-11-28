@@ -1,0 +1,16 @@
+Invalid command 'std', try again.
+D:\Projects\Java-Project-M
+D:\Projects\Java-Project-M
+Hello World!.git/
+.vscode/
+bin/
+dd
+lib/
+README.md
+src/
+test.txt
+test1.txt
+test2.txt
+tst.txt
+
+Server closed. Enter any key to exit.
