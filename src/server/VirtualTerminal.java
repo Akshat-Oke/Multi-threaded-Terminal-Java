@@ -6,8 +6,11 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.stream.Stream;
 import java.nio.file.Path;
 
@@ -116,20 +119,26 @@ public class VirtualTerminal {
         return response;
     }
 
-    public void sendFile(String fileName, DataOutputStream writer) {
-        try {
-            // writer.writeChars(fileName + ": download\n");
-            // write binary data into writer
-            DataInputStream reader = new DataInputStream(new BufferedInputStream(
-                    new FileInputStream(new File(currentDirectory.resolve(fileName).toString()))));
-            byte[] buffer = new byte[4096];
-            int bytesRead = 0;
-            while ((bytesRead = reader.read(buffer)) > 0) {
-                writer.write(buffer, 0, bytesRead);
-            }
-            reader.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+    public void sendBean(Bean bean, DataOutputStream writer) throws IOException {
+        // serialize bean and save to file
+        FileOutputStream fileOutputStream;
+        fileOutputStream = new FileOutputStream("bean.ser");
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);
+        objectOutputStream.writeObject(bean);
+        objectOutputStream.close();
+        sendFile("bean.ser", writer);
+    }
+
+    public void sendFile(String fileName, DataOutputStream writer) throws IOException {
+        // write binary data into writer
+        DataInputStream reader = new DataInputStream(new BufferedInputStream(
+                new FileInputStream(new File(currentDirectory.resolve(fileName).toString()))));
+        byte[] buffer = new byte[4096];
+        int bytesRead = 0;
+        while ((bytesRead = reader.read(buffer)) > 0) {
+            writer.write(buffer, 0, bytesRead);
         }
+        reader.close();
+
     }
 }

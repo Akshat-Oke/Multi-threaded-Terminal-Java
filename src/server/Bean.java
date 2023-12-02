@@ -3,7 +3,6 @@ package server;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 /**
  * JavaBean component class. This Bean implements Serializable in order to be
@@ -19,7 +18,7 @@ public class Bean implements Serializable {
     private int value;
 
     // Subscriber list to the event
-    private List<BeanValueListener> listeners;
+    private transient List<BeanValueListener> listeners;
 
     /**
      * Constructor. Randomizes the value

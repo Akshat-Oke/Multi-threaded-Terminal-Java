@@ -69,6 +69,14 @@ public class ClientHandler implements Runnable, BeanValueListener {
                     sendTerminalResponse("Error uploading file");
                 }
                 break;
+            case "bean":
+                try {
+                    virtualTerminal.sendBean(clientCountBean, dataOutputStream);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    sendTerminalResponse("Error sending bean");
+                }
+                break;
             default:
                 sendTerminalResponse("Invalid command '" + command + "', try again.");
                 break;
