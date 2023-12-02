@@ -8,18 +8,21 @@ import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 
-public class ClientHandler implements Runnable {
+public class ClientHandler implements Runnable, BeanValueListener {
     public static ArrayList<ClientHandler> clientHandlers = new ArrayList<>();
     private Socket socket;
     private BufferedReader bufferedReader;
     private BufferedWriter bufferedWriter;
     private DataOutputStream dataOutputStream;
     private String clientUsername;
+    private Bean clientCountBean;
     private VirtualTerminal virtualTerminal = new VirtualTerminal();
     private boolean isNextBroadcastCommand = false;
     private boolean isRunning = true;
 
-    public ClientHandler(Socket socket) {
+    public ClientHandler(Socket socket, Bean bean) {
+        this.clientCountBean = bean;
+        this.clientCountBean.addListener(this);
         try {
             this.socket = socket;
             this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -28,13 +31,19 @@ public class ClientHandler implements Runnable {
             this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
             this.clientUsername = bufferedReader.readLine();
             clientHandlers.add(this);
-            broadcastMessage("SERVER: " + clientUsername + " has joined the chat");
+            broadcastMessage(clientUsername + " has joined the chat", false);
             sendTerminalResponse("Welcome to the chat server, " + clientUsername + "!\nEnter your command> ");
 
         } catch (Exception e) {
             e.printStackTrace();
             closeEverything();
         }
+    }
+
+    @Override
+    public void awareOfChangeInValue(EventBeanValue ev) {
+        int newValue = ev.getNewValue();
+        sendTerminalResponse(ColorString.toRed("There are now " + newValue + " clients connected"));
     }
 
     private void runServerCommand(String command) {
@@ -68,7 +77,7 @@ public class ClientHandler implements Runnable {
 
     private void invokeCommand(String message) {
         if (isNextBroadcastCommand) {
-            broadcastMessage(message);
+            broadcastMessage(message, true);
             isNextBroadcastCommand = false;
             sendTerminalResponse("Message sent. Enter your command>");
             return;
@@ -106,7 +115,7 @@ public class ClientHandler implements Runnable {
                 System.out.println(messageFromClient);
                 // isRunning = false;
                 if (messageFromClient == null) {
-                    broadcastMessage("SERVER: " + clientUsername + " has left the chat");
+                    broadcastMessage(clientUsername + " has left the chat", false);
                     closeEverything();
                     break;
                 }
@@ -124,9 +133,10 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    public void broadcastMessage(String message) {
+    public void broadcastMessage(String message, boolean isUserMessage) {
         // color message to blue
-        message = "\u001B[34m" + clientUsername + ": " + message + "\u001B[0m";
+        String prepend = isUserMessage ? clientUsername + ": " : "SERVER: ";
+        message = "\u001B[34m" + prepend + message + "\u001B[0m";
         for (ClientHandler clientHandler : clientHandlers) {
             try {
                 if (!clientHandler.clientUsername.equals(clientUsername)) {
@@ -145,10 +155,11 @@ public class ClientHandler implements Runnable {
         // if (!isRunning)
         // return;
         clientHandlers.remove(this);
-        broadcastMessage("SERVER: " + clientUsername + " has left the chat");
+        broadcastMessage(clientUsername + " has left the chat", false);
         closeEverything();
         System.out.println("Exiting");
         isRunning = false;
+        this.clientCountBean.removeListener(this);
     }
 
     public void closeEverything() {

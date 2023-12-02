@@ -19,16 +19,22 @@ public class Parser {
         String response = "";
         switch (command) {
             case "ls":
-                response = virtualTerminal.ls();
+                response = ColorString.toBlue(virtualTerminal.ls());
                 break;
             case "pwd":
-                response = virtualTerminal.pwd();
+                response = ColorString.toGreen(virtualTerminal.pwd());
                 break;
             case "cd":
-                response = virtualTerminal.cd(argument);
+                response = ColorString.toBlue(virtualTerminal.cd(argument));
+                break;
+            case "cat":
+                response = ColorString.toBlue(virtualTerminal.cat(argument, false));
+                break;
+            case "more":
+                response = ColorString.toBlue(virtualTerminal.more());
                 break;
             case "r--r":
-                response = "rerouting to file";
+                response = ColorString.toRed("rerouting to file");
                 break;
             // case "mkdir":
             // response = VirtualTerminal.mkdir(argument);

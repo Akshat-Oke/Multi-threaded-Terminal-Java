@@ -5,6 +5,7 @@ import java.net.Socket;
 
 public class Server {
     private final ServerSocket serverSocket;
+    private Bean clientCountBean = new Bean();
 
     public Server(ServerSocket serverSocket) {
         this.serverSocket = serverSocket;
@@ -16,7 +17,7 @@ public class Server {
             while (!serverSocket.isClosed()) {
                 Socket socket = serverSocket.accept();
                 System.out.println("Client connected");
-                ClientHandler clientHandler = new ClientHandler(socket);
+                ClientHandler clientHandler = new ClientHandler(socket, clientCountBean);
                 Thread thread = new Thread(clientHandler);
                 thread.start();
             }

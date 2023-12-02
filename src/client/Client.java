@@ -173,7 +173,3 @@ public class Client {
         System.out.println("Client closed");
     }
 }
-// malloc for struct, calloc, realloc, free
-// struct, union
-// linked list, stack, queue, binary tree
-// file handling

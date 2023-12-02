@@ -2,7 +2,6 @@ package server;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -41,19 +40,25 @@ public class VirtualTerminal {
         if (catCommand == null) {
             response = "[more] No file to paginate";
         } else {
-            response = cat(catCommand.catCommandFileName);
+            response = cat(catCommand.catCommandFileName, true);
         }
         return response;
     }
 
-    public String cat(String argument) {
+    public String cat(String argument, boolean isMore) {
+        if (argument == null) {
+            return "[cat] No file specified";
+        }
         String response = "";
-        if (catCommand == null) {
+        if (catCommand == null || !isMore) {
             catCommand = new CatCommand(argument);
         }
         int startLine = catCommand.lineNum;
-        try (BufferedReader br = new BufferedReader(new FileReader(argument))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(currentDirectory.resolve(argument).toString()))) {
             String line;
+            for (int i = 0; i < startLine; i++) {
+                br.readLine();
+            }
             while ((line = br.readLine()) != null && ++catCommand.lineNum <= startLine + 10) {
                 response += line + "\n";
             }
@@ -116,7 +121,7 @@ public class VirtualTerminal {
             // writer.writeChars(fileName + ": download\n");
             // write binary data into writer
             DataInputStream reader = new DataInputStream(new BufferedInputStream(
-                    new FileInputStream(new File(fileName))));
+                    new FileInputStream(new File(currentDirectory.resolve(fileName).toString()))));
             byte[] buffer = new byte[4096];
             int bytesRead = 0;
             while ((bytesRead = reader.read(buffer)) > 0) {
